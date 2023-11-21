@@ -12,6 +12,8 @@ const SideBar = async () => {
   const Ares = await getAllUsers({ email: session?.user?.email });
   const Auser = JSON.parse(Ares);
   const Contacts = await getConatctFromMessage({ userid: GetCUser?._id });
+  console.log({ env: process.env.NEXTAUTH_URL_INTERNAL });
+
   return (
     <div className=" md:h-screen   h-screen relative overflow-y-auto flex flex-col  border-[1px]  border-[#b4b4b4]  w-full lg:w-[400px] bg-[#FAF9F6]">
       <SideBarClient GetCUser={GetCUser} Auser={Auser} />

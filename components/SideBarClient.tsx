@@ -46,8 +46,6 @@ const SideBarClient = ({ GetCUser, Auser }: any) => {
   const handleJoin = () => {
     if (session) {
       sockett?.emit('join_room', currentUser?._id);
-    } else {
-      alert('Please fill in Username and Room Id');
     }
   };
   useEffect(() => {

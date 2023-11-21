@@ -1,12 +1,15 @@
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const dotenvs = require('dotenv');
 
 const httpServer = http.createServer();
 
+dotenvs.config();
+
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:3000', // Replace with your frontend URL
+    origin: 'http://localhost:3000' || process.env.NEXTAUTH_URL_INTERNAL, // Replace with your frontend URL
     methods: ['GET', 'POST'],
     allowedHeaders: ['my-custom-header'],
     credentials: true,
