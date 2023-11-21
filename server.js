@@ -9,7 +9,7 @@ dotenvs.config();
 
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:3000' || process.env.NEXTAUTH_URL_INTERNAL, // Replace with your frontend URL
+    origin: process.env.NEXTAUTH_URL_INTERNAL || 'http://localhost:3000', // Replace with your frontend URL
     methods: ['GET', 'POST'],
     allowedHeaders: ['my-custom-header'],
     credentials: true,
