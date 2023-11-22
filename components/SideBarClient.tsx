@@ -35,10 +35,15 @@ const SideBarClient = ({ GetCUser, Auser }: any) => {
   useEffect(() => {
     dispatch(CurrentUserDetails(GetCUser));
   }, [GetCUser]);
-
+  const AA = process.env.SERVER_URL;
+  console.log({ AA });
   useEffect(() => {
     if (currentUser) {
-      socket = io('http://localhost:3001');
+      socket = io(
+        process.env.SERVER_URL
+          ? process.env.SERVER_URL
+          : 'http://localhost:3001'
+      );
       dispatch(SocketReducer(socket));
     }
   }, [currentUser]);

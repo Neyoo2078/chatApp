@@ -8,6 +8,7 @@ const nextConfig = {
     NEXTAUTH_URL_INTERNAL: 'http://localhost:3000',
     TWITTER_ID: '',
     TWITTER_SECRET: '',
+    SERVER_URL: 'http://localhost:3001',
   },
 };
 
