@@ -4,9 +4,6 @@ import { Server as ServerIo } from 'socket.io';
 import { NextApiResponseServerIo } from '@/type';
 import cors from 'cors';
 
-// Create a new instance of the CORS middleware
-const corsMiddleware = cors();
-
 const IoHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
   if (!res.socket.server.io) {
     const path = '/api/socket/io';
@@ -32,7 +29,7 @@ const IoHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
           onlineUser: Array.from(onlineUsers.keys()),
         });
         // socket.broadcast.emit('online_users', {
-        //   // onlineUser: Array.from(onlineUsers.keys())
+        //   // onlineUser: Array.from(onlineUsers.keys()),
         //   bb: 'we here',
         // });
       });
@@ -45,8 +42,7 @@ const IoHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
         const sendUserSocket = onlineUsers.get(data.receiverId);
         //This will send a message to a specific room ID
         // socket.to(data.roomId).emit('receive_msg', data);
-        console.log({ onlineUsers });
-        console.log(sendUserSocket);
+
         if (sendUserSocket) {
           socket.to(sendUserSocket).emit('recieve-msg', {
             senderId: data.from,
@@ -61,12 +57,10 @@ const IoHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
         console.log('A user disconnected:', socket.id);
       });
     });
-    // Apply the CORS middleware to the request and response
-    corsMiddleware(req, res, () => {
-      res.socket.server.io = io;
-      res.end();
-    });
+
+    res.socket.server.io = io;
   }
+  res.end();
 };
 
 export default IoHandler;
