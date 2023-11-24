@@ -21,6 +21,7 @@ import {
   UpdateActiveMessages,
 } from '@/Redux/Slices/Messages';
 import { BsCheck2, BsCheck2All } from 'react-icons/bs';
+import { useSocket } from '@/providers/socket-provider';
 
 export default function Home() {
   // useState instances
@@ -33,6 +34,7 @@ export default function Home() {
   // const scrollContainer = messageS.current;
   // console.log(scrollContainer?.scrollHeight);
   // console.log(scrollContainer?.clientHeight);
+  const { isConnected, socket } = useSocket();
 
   console.log({ Pp: messageScroll });
 
@@ -55,19 +57,35 @@ export default function Home() {
       ActiveChat: activeChat?._id,
     });
     dispatch(DbActiveMessages(JSON.parse(res)));
+    // setTimeout(() => {
+    //   const scrollContainer = messageS.current;
+    //   const ss = messageScroll.current;
+    //   if (ss) {
+    //     ss.scrollIntoView({ behavior: 'smooth' });
+    //   }
+    // }, 1000);
   };
-
+  useEffect(() => {
+    setTimeout(() => {
+      const scrollContainer = messageS.current;
+      const ss = messageScroll.current;
+      if (ss) {
+        ss.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 1000);
+  }, [activeMessages]);
   useEffect(() => {
     getChatWithActiveUser();
   }, [activeChat]);
 
   useEffect(() => {
-    if (sockett) {
-      sockett.on('recieve-msg', (data: any) => {
+    if (socket) {
+      socket.on('recieve-msg', (data: any) => {
+        console.log('we recieving');
         dispatch(UpdateActiveMessages(data));
       });
     }
-  }, [sockett]);
+  }, [socket]);
   // date
   masks.hammerTime = 'HH:MM';
 
@@ -88,14 +106,7 @@ export default function Home() {
       dispatch(UpdateActiveMessages(JSON.parse(res)));
 
       // send through socket if the reciever is online
-      sockett.emit('send_msg', JSON.parse(res));
-      setTimeout(() => {
-        const scrollContainer = messageS.current;
-        const ss = messageScroll.current;
-        if (ss) {
-          ss.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 1000);
+      socket.emit('send_msg', JSON.parse(res));
 
       // if (scrollContainer) {
       //   const scrollHeight = scrollContainer.scrollHeight;

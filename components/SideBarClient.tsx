@@ -12,6 +12,7 @@ import { io } from 'socket.io-client';
 import { GetUserByEmail } from '@/lib/Actions/UserActions';
 import { CurrentUserDetails, OnlineUsers } from '@/Redux/Slices/Users';
 import { SocketReducer } from '@/Redux/Slices/Messages';
+import { useSocket } from '@/providers/socket-provider';
 
 const SideBarClient = ({ GetCUser, Auser }: any) => {
   const { data: session } = useSession();
@@ -22,56 +23,60 @@ const SideBarClient = ({ GetCUser, Auser }: any) => {
   const [searchFocus, setsearchFocus] = useState(false);
 
   // use Selector
-  const { activeChat, userChatList, currentUser } = useAppSelector(
+  const { activeChat, userChatList, currentUser, onlineUser } = useAppSelector(
     (state) => state.Users
   );
+  console.log({ onlineUser });
   const { activeMessages, sockett } = useAppSelector((state) => state.Messages);
   // initiaolize dispatch
   const dispatch = useAppDispatch();
 
-  // Socket Io
-  var socket: any;
+  const { isConnected, socket } = useSocket();
+  console.log({ isConnected, socket });
+  // // Socket Io
+  // var socket: any;
 
   useEffect(() => {
     dispatch(CurrentUserDetails(GetCUser));
   }, [GetCUser]);
-  const AA = process.env.SERVER_URL;
-  console.log({ AA });
-  useEffect(() => {
-    if (currentUser) {
-      socket = io(
-        process.env.SERVER_URL
-          ? process.env.SERVER_URL
-          : 'http://localhost:3001'
-      );
-      dispatch(SocketReducer(socket));
-    }
-  }, [currentUser]);
+  // const AA = process.env.SERVER_URL;
+  // console.log({ AA });
+  // useEffect(() => {
+  //   if (currentUser) {
+  //     socket = io('http://localhost:5000');
+  //     dispatch(SocketReducer(socket));
+  //   }
+  // }, [currentUser]);
 
+  // const handleJoin = () => {
+  //   if (session) {
+  //     console.log('entered join room');
+  //     socket?.emit('join_room', currentUser?._id);
+  //   }
+  // };
   const handleJoin = () => {
-    if (session) {
-      sockett?.emit('join_room', currentUser?._id);
+    if (socket) {
+      console.log('entered join room');
+      console.log({ joinId: currentUser?._id });
+      socket?.emit('join_room', currentUser?._id);
     }
   };
-  useEffect(() => {
-    sockett?.on('online_users', (data: any) => {
-      dispatch(OnlineUsers(data));
-      console.log({ onlineUser: data });
-    });
-  }, [sockett]);
 
   useEffect(() => {
-    if (currentUser && sockett) {
+    if (socket) {
+      socket.on('online_users', (data: any) => {
+        dispatch(OnlineUsers(data));
+      });
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    if (currentUser && socket) {
       handleJoin();
     }
-  }, [currentUser, sockett]);
+  }, [currentUser, socket]);
   // Socket Io Ends
 
-  // useEffect(() => {
-  //   if (session) {
-  //     GetCUser();
-  //   }
-  // }, [session]);
   useEffect(() => {
     const filterAllUsers = AllUser.filter((items: any) => {
       const exist = userChatList.find((item: any) => item._id === items._id);
@@ -96,6 +101,7 @@ const SideBarClient = ({ GetCUser, Auser }: any) => {
           <button
             onClick={() => {
               signOut({ redirect: false });
+              socket.emit('Sign_out', currentUser?._id);
             }}
             className="text-[#c43d3d]"
           >

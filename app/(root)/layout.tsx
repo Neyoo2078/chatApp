@@ -5,6 +5,7 @@ import SideBar from '@/components/SideBar';
 import ButtomBar from '@/components/ButtomBar';
 import SessionProvider from '@/providers/SessionProvider';
 import Store from '@/Redux/ReduxProvider';
+import { SocketProvider } from '@/providers/socket-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,10 +25,12 @@ export default function RootLayout({
         <Store>
           <SessionProvider>
             {' '}
-            <div className="flex ">
-              <SideBar />
-              {children}
-            </div>
+            <SocketProvider>
+              <div className="flex ">
+                <SideBar />
+                {children}
+              </div>
+            </SocketProvider>
           </SessionProvider>
         </Store>
       </body>
