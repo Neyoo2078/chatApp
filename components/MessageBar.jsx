@@ -42,7 +42,6 @@ const MessageBar = ({ message, setmessage, emojiBox }) => {
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
 
-      console.log({ res });
       if (res.status === '200') {
         await Socketinfo.emit('send-msg', {
           to: currentChat._id,

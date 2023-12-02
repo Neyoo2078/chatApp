@@ -25,12 +25,11 @@ export default function RootLayout({
         <Store>
           <SessionProvider>
             {' '}
-            <SocketProvider>
-              <div className="flex ">
-                <SideBar />
-                {children}
-              </div>
-            </SocketProvider>
+            <div className="flex ">
+              <SideBar />
+              {children}
+              <div id="photo-picker-element"></div>
+            </div>
           </SessionProvider>
         </Store>
       </body>

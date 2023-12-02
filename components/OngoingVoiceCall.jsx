@@ -2,23 +2,38 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { MdOutlineCallEnd } from 'react-icons/md';
-import { useDispatch } from 'react-redux';
-import { EndCall } from '@/reduxReducers/Reducers';
-import { useSelector } from 'react-redux';
-import axios from 'axios';
+import { EndVCall as EndCall } from '@/Redux/Slices/Calls';
+import {
+  IncomingVoiceCall as IncomingVoiceCalls,
+  OngoingVoiceCall as OngoingVoiceCalls,
+} from '@/Redux/Slices/Calls';
+import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
+
 const OngoingVoiceCall = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [Token, setToken] = useState(undefined);
   const [zgVar, setzgVar] = useState(undefined);
   const [localStream, setlocalStream] = useState(undefined);
   const [publishStream, setpublishStream] = useState(undefined);
 
-  const { Socketinfo, OngoingVoiceCall } = useSelector((state) => state.User);
+  // useSelector
+  const { activeChat, onlineUser, currentUser } = useAppSelector(
+    (state) => state.Users
+  );
+  const { activeMessages, sockett: socket } = useAppSelector(
+    (state) => state.Messages
+  );
+
+  const {
+    outgoingCall,
+    incomingCall,
+    ongoingVoiceCall: data,
+  } = useAppSelector((state) => state.Calls);
 
   const getToken = async () => {
     try {
       const { data: token } = await axios.get(
-        `/generate/token/${ReducerSesiion._id}`
+        `/generate/token/${currentUser._id}`
       );
 
       setToken(token);
@@ -69,8 +84,8 @@ const OngoingVoiceCall = () => {
         data.roomId.toString(),
         Token,
         {
-          userID: ReducerSesiion._id.toString(),
-          userName: ReducerSesiion.displayName,
+          userID: currentUser._id.toString(),
+          userName: currentUser.displayName,
         },
         { userUpdate: true }
       );
@@ -109,7 +124,7 @@ const OngoingVoiceCall = () => {
 
   const EndCalls = () => {
     dispatch(EndCall());
-    Socketinfo.emit('end_call', { to: OngoingVoiceCall.id });
+    Socketinfo.emit('end_call', { to: ongoingVoiceCall.id });
 
     zgVar.destroyStream(localStream);
     zgVar.stopPublishingStream(publishStream);
@@ -118,10 +133,10 @@ const OngoingVoiceCall = () => {
   return (
     <div className="w-full text-white bg-chat-bg h-screen flex gap-3 flex-col items-center justify-center">
       <div className=" flex flex-col w-full items-center justify-center">
-        {OngoingVoiceCall.callType === 'in-coming' && (
+        {ongoingVoiceCall.callType === 'in-coming' && (
           <div className="my-15">
             <Image
-              src={OngoingVoiceCall.avatar}
+              src={ongoingVoiceCall.avatar}
               width={120}
               height={120}
               alt='"avatar'
@@ -129,10 +144,10 @@ const OngoingVoiceCall = () => {
           </div>
         )}
         <h1 className="text-[40px] text-black">
-          {OngoingVoiceCall.displayName}
+          {ongoingVoiceCall.displayName}
         </h1>
         <h1 className="text-[20px] text-black">
-          {OngoingVoiceCall.callType !== 'audio' ? 'on going' : 'Calling'}
+          {ongoingVoiceCall.callType !== 'audio' ? 'on going' : 'Calling'}
         </h1>
       </div>
 

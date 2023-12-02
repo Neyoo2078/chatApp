@@ -2,10 +2,10 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { MdOutlineCallEnd } from 'react-icons/md';
-import { useDispatch } from 'react-redux';
-import { EndCall } from '@/reduxReducers/Reducers';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { EndVCall, EndVideoCall } from '@/Redux/Slices/Calls';
 import axios from 'axios';
+import { useAppDispatch, useAppSelector } from '@/Redux/hooks';
 const VideoCall = () => {
   const [CallAccepted, setCallAccepted] = useState(false);
   const [Token, setToken] = useState(undefined);
@@ -14,13 +14,18 @@ const VideoCall = () => {
   const [publishStream, setpublishStream] = useState(undefined);
   console.log({ zgVar, Token });
   console.log(Token);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
-  const {
-    Socketinfo,
-    videoCall: data,
-    ReducerSesiion,
-  } = useSelector((state) => state.User);
+  const { activeChat, onlineUser, currentUser } = useAppSelector(
+    (state) => state.Users
+  );
+  const { activeMessages, sockett: socket } = useAppSelector(
+    (state) => state.Messages
+  );
+
+  const { outgoingVideoCall: data, incomingCall } = useAppSelector(
+    (state) => state.Calls
+  );
 
   const getToken = async () => {
     try {
@@ -119,12 +124,12 @@ const VideoCall = () => {
     }
   }, [Token]);
   useEffect(() => {
-    Socketinfo?.emit('outgoing-video-call', {
+    socket?.emit('outgoing-video-call', {
       to: data._id,
       from: {
-        id: ReducerSesiion._id,
-        avatar: ReducerSesiion.avatar,
-        displayName: ReducerSesiion.displayName,
+        id: currentUser._id,
+        avatar: currentUser.avatar,
+        displayName: currentUser.displayName,
       },
       callType: data.callType,
       roomId: data.roomId,
@@ -132,22 +137,20 @@ const VideoCall = () => {
   }, []);
 
   const EndCalls = () => {
-    console.log({ type: data.callType, zgVar, localStream, publishStream });
     if (data.callType === 'on_going' && zgVar && localStream && publishStream) {
-      console.log('we entered');
       zgVar.destroyStream(localStream);
       zgVar.stopPublishingStream(publishStream);
       zgVar.logoutRoom(data.roomId.toString());
     }
 
-    dispatch(EndCall());
+    dispatch(EndVideoCall());
 
-    Socketinfo?.emit('end_call', {
+    socket?.emit('end_v_call', {
       to: data._id,
       from: {
-        id: ReducerSesiion._id,
-        avatar: ReducerSesiion.avatar,
-        displayName: ReducerSesiion.displayName,
+        id: currentUser._id,
+        avatar: currentUser.avatar,
+        displayName: currentUser.displayName,
       },
       callType: data.callType,
       roomId: data.roomId,

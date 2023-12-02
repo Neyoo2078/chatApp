@@ -17,9 +17,11 @@
     "@mui/material": "^5.14.18",
     "@reduxjs/toolkit": "^1.9.7",
     "@types/socket.io": "^3.0.2",
+    "axios": "^1.6.2",
     "cors": "^2.8.5",
     "dateformat": "^5.0.3",
     "dotenv": "^16.3.1",
+    "emoji-picker-react": "^4.5.16",
     "formik": "^2.4.5",
     "mongodb": "^6.2.0",
     "mongoose": "^8.0.0",
@@ -33,7 +35,9 @@
     "redux": "^4.2.1",
     "redux-thunk": "^2.4.2",
     "socket.io": "^4.7.2",
-    "socket.io-client": "^4.7.2"
+    "socket.io-client": "^4.7.2",
+    "wavesurfer.js": "^7.4.12",
+    "zego-express-engine-webrtc": "^3.0.1"
   },
   "devDependencies": {
     "@types/dateformat": "^5.0.2",

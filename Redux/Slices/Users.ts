@@ -32,9 +32,17 @@ const UserSlice = createSlice({
     OnlineUsers(state, action) {
       state.onlineUser = action.payload;
     },
+    Chatlist(state, action) {
+      state.userChatList = action.payload;
+    },
   },
 });
 
-export const { ActiveChat, AddtoChatList, CurrentUserDetails, OnlineUsers } =
-  UserSlice.actions;
+export const {
+  ActiveChat,
+  AddtoChatList,
+  CurrentUserDetails,
+  OnlineUsers,
+  Chatlist,
+} = UserSlice.actions;
 export default UserSlice.reducer;

@@ -1,36 +1,43 @@
-import { useSelector } from 'react-redux';
 import Image from 'next/image';
-import { SetOngoingVideoCall } from '@/reduxReducers/Reducers';
-import { SetIncomingVideoCall } from '@/reduxReducers/Reducers';
+import { OngoingVideoCall } from '@/Redux/Slices/Calls';
 import { useDispatch } from 'react-redux';
-import { EndCall } from '@/reduxReducers/Reducers';
+import { EndVideoCall } from '@/Redux/Slices/Calls';
+import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
 
 const IncomingVideoCall = () => {
   const dispatch = useDispatch();
-  const { incomingVideoCall, Socketinfo } = useSelector((state) => state.User);
-  console.log({ incomingVideoCall });
+  const { activeMessages, sockett: socket } = useAppSelector(
+    (state) => state.Messages
+  );
+  const {
+    outgoingCall,
+    incomingCall,
+    ongoingVoiceCall,
+    outgoingVideoCall,
+    incomingvideoCall,
+  } = useAppSelector((state) => state.Calls);
+  console.log({ incomingvideoCall });
   const acceptCall = () => {
-    dispatch(
-      SetOngoingVideoCall({ ...incomingVideoCall, callType: 'in-coming' })
-    );
-    Socketinfo.emit('accept-incoming-Vcall', { id: incomingVideoCall.id });
-    dispatch(SetIncomingVideoCall(undefined));
+    dispatch(OngoingVideoCall({ ...incomingvideoCall, callType: 'in-coming' }));
+    socket.emit('accept-incoming-Vcall', { id: incomingvideoCall.id });
+    dispatch(IncomingVideoCall(undefined));
   };
 
   const rejectCall = () => {
-    Socketinfo.emit('reject-voice-call', { from: incomingVideoCall.id });
-    dispatch(EndCall());
+    console.log({ incomingvideoCall });
+    socket.emit('reject-video-call', { from: incomingvideoCall.id });
+    dispatch(EndVideoCall());
   };
   return (
     <div className="absolute w-[400px] h-[200px] text-white gap-2 flex-col  flex justify-center items-center bg-black bottom-[100px] m-auto ">
       <Image
-        src={incomingVideoCall.avatar}
+        src={incomingvideoCall?.avatar}
         alt='"avatar'
         width={70}
         height={70}
         className="rounded-full"
       />
-      <div>{incomingVideoCall.displayName}</div>
+      <div>{incomingvideoCall.displayName}</div>
       <div className="text-xs">Incoming Video Call</div>
       <div className="flex gap-2 mt-2">
         <button

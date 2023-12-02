@@ -31,7 +31,6 @@ export const GetUserByEmail = async ({
 }: {
   email: string | null | undefined;
 }) => {
-  console.log({ email });
   try {
     connectionDb();
     const res = await Users.findOne({ email });
@@ -58,7 +57,6 @@ export const UpdateProfile = async ({
   try {
     connectionDb();
 
-    console.log('we entered');
     const res = await Users.findByIdAndUpdate(
       id,
       { avatar, displayName, about, newUser },

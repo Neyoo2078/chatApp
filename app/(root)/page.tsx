@@ -13,43 +13,120 @@ import { CiFaceSmile, CiMicrophoneOn } from 'react-icons/ci';
 import { TiAttachment } from 'react-icons/ti';
 import { VscSend } from 'react-icons/vsc';
 import { BsDot } from 'react-icons/bs';
-import { useFormik } from 'formik';
+import axios from 'axios';
+import { Formik, useFormik } from 'formik';
 import { CreateDbMessage } from '@/lib/Actions/MessageActions';
 import { ChatWithActiveUser } from '@/lib/Actions/MessageActions';
+import PhotoPicker from '@/components/PhotoPicker';
+import {
+  OutGoingVCall,
+  IncomingVoiceCall,
+  updateVideoCall,
+  IncomingVideoCall as IncomingVideoCalls,
+  OngoingVideoCall as OngoingVideoCalls,
+} from '@/Redux/Slices/Calls';
 import {
   DbActiveMessages,
   UpdateActiveMessages,
 } from '@/Redux/Slices/Messages';
 import { BsCheck2, BsCheck2All } from 'react-icons/bs';
 import { useSocket } from '@/providers/socket-provider';
+import { usePathname } from 'next/navigation';
+import { revPath } from '@/lib/Actions/MessageActions';
+import EmojiPicker from '@/components/EmojiPickers';
+import { ChangeEvent } from 'react';
+import AudioMessage from '@/components/AudioMessage';
+import {
+  EndVCall,
+  updateVoiceCall,
+  OutGoingVideoCall,
+} from '@/Redux/Slices/Calls';
+import VoiceCall from '@/components/VoiceCall';
+import IncomingVoiceCalls from '@/components/IncomingVoiceCall';
+import OngoingVoiceCall from '@/components/OngoingVoiceCall';
+import IncomingVideoCall from '@/components/IncomingVideoCall';
+import VideoCall from '@/components/VideoCall';
+import { EndVideoCall } from '@/Redux/Slices/Calls';
+import OngoingVideoCall from '@/components/OngoingVideoCall';
 
 export default function Home() {
   // useState instances
   const [messagescroll, setmessagescroll] = useState('');
-
-  // refs
-  const messageScroll = useRef<HTMLDivElement>(null);
-  const messageS = useRef<HTMLDivElement>(null);
-
-  // const scrollContainer = messageS.current;
-  // console.log(scrollContainer?.scrollHeight);
-  // console.log(scrollContainer?.clientHeight);
-  const { isConnected, socket } = useSocket();
-
-  console.log({ Pp: messageScroll });
-
-  // status can be loading aunthenticated ununthenticated
-  const { data: session, status } = useSession();
-  const route = useRouter();
-  // initiate Dispatch
-  const dispatch = useAppDispatch();
+  const [openEmoji, setopenEmoji] = useState(false);
+  const [addComment, setaddComment] = useState('');
+  const [PhotoMsg, setPhotoMsg] = useState(false);
+  const [audioMessage, setaudioMessage] = useState(false);
 
   // useSelector
   const { activeChat, onlineUser, currentUser } = useAppSelector(
     (state) => state.Users
   );
-  const { activeMessages, sockett } = useAppSelector((state) => state.Messages);
-  console.log({ sockett });
+  const { activeMessages, sockett: socket } = useAppSelector(
+    (state) => state.Messages
+  );
+
+  const {
+    outgoingCall,
+    incomingCall,
+    ongoingVoiceCall,
+    outgoingVideoCall,
+    incomingvideoCall,
+    ongoingVideoCall,
+  } = useAppSelector((state) => state.Calls);
+
+  const photoPickChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    console.log('we enter function');
+    const file = e.target.files?.[0];
+
+    if (file) {
+      const formdata = new FormData();
+      formdata.append('image', file);
+
+      try {
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/image/add-image-message/?from=${activeChat?._id}&to=${currentUser?._id}`,
+          formdata,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        const ress = await CreateDbMessage({
+          senderId: currentUser?._id,
+          receiverId: activeChat?._id,
+          message: res.data?.message,
+          path: pathname,
+          messageType: 'image',
+          messageStatus: 'sent',
+        });
+
+        // dispatch the message to current user
+        if (onlineUser?.onlineUser?.includes(activeChat?._id)) {
+          dispatch(
+            UpdateActiveMessages({
+              ...JSON.parse(ress),
+              messageStatus: 'delivered',
+            })
+          );
+        } else {
+          dispatch(UpdateActiveMessages(JSON.parse(ress)));
+        }
+        // send through socket if the reciever is online
+        socket?.emit('send_msg', JSON.parse(ress));
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
+
+  // refs
+  const messageScroll = useRef<HTMLDivElement>(null);
+  const messageS = useRef<HTMLDivElement>(null);
+
+  // status can be loading aunthenticated ununthenticated
+  const { data: session, status } = useSession();
+  const route = useRouter();
+  const pathname = usePathname();
+
+  // initiate Dispatch
+  const dispatch = useAppDispatch();
 
   const getChatWithActiveUser = async () => {
     const res = await ChatWithActiveUser({
@@ -57,14 +134,20 @@ export default function Home() {
       ActiveChat: activeChat?._id,
     });
     dispatch(DbActiveMessages(JSON.parse(res)));
-    // setTimeout(() => {
-    //   const scrollContainer = messageS.current;
-    //   const ss = messageScroll.current;
-    //   if (ss) {
-    //     ss.scrollIntoView({ behavior: 'smooth' });
-    //   }
-    // }, 1000);
   };
+
+  useEffect(() => {
+    if (PhotoMsg) {
+      const data = document.getElementById('photo-picker');
+      data?.click();
+      document.body.onfocus = (e) => {
+        setTimeout(() => {
+          setPhotoMsg(false);
+        }, 1000);
+      };
+    }
+  }, [PhotoMsg]);
+
   useEffect(() => {
     setTimeout(() => {
       const scrollContainer = messageS.current;
@@ -74,6 +157,7 @@ export default function Home() {
       }
     }, 1000);
   }, [activeMessages]);
+
   useEffect(() => {
     getChatWithActiveUser();
   }, [activeChat]);
@@ -81,8 +165,27 @@ export default function Home() {
   useEffect(() => {
     if (socket) {
       socket.on('recieve-msg', (data: any) => {
-        console.log('we recieving');
-        dispatch(UpdateActiveMessages(data));
+        const verifyData = data.senderId === activeChat?._id;
+        if (verifyData) {
+          dispatch(
+            UpdateActiveMessages({
+              senderId: data.senderId,
+              message: data.message,
+              messageStatus: 'read',
+              messageType: data.messageType,
+            })
+          );
+        } else {
+          dispatch(
+            UpdateActiveMessages({
+              senderId: data.senderId,
+              message: data.message,
+              messageStatus: 'delivered',
+              messageType: data.messageType,
+            })
+          );
+        }
+        revPath();
       });
     }
   }, [socket]);
@@ -91,39 +194,89 @@ export default function Home() {
 
   // 17:46! Can't touch this!
   // FORMIK
-  const formik = useFormik({
-    initialValues: {
-      message: '',
-    },
-    onSubmit: async (values) => {
-      const res = await CreateDbMessage({
-        senderId: currentUser?._id,
-        receiverId: activeChat?._id,
-        message: values.message,
-      });
-      values.message = '';
-      // dispatch the message to current user
+
+  const handleSubmit = async () => {
+    const res = await CreateDbMessage({
+      senderId: currentUser?._id,
+      receiverId: activeChat?._id,
+      message: addComment,
+      path: pathname,
+      messageType: 'text',
+      messageStatus: 'sent',
+    });
+    setaddComment('');
+
+    // dispatch the message to current user
+    if (onlineUser?.onlineUser?.includes(activeChat?._id)) {
+      dispatch(
+        UpdateActiveMessages({
+          ...JSON.parse(res),
+          messageStatus: 'delivered',
+        })
+      );
+    } else {
       dispatch(UpdateActiveMessages(JSON.parse(res)));
+    }
 
-      // send through socket if the reciever is online
-      socket.emit('send_msg', JSON.parse(res));
+    // send through socket if the reciever is online
+    socket?.emit('send_msg', JSON.parse(res));
+  };
+  useEffect(() => {
+    socket?.on('incoming_voice_call', ({ from, roomId, callType }: any) => {
+      dispatch(IncomingVoiceCall({ ...from, roomId, callType }));
+    });
+  }, [socket]);
+  useEffect(() => {
+    socket?.on('incoming_video_call', ({ from, roomId, callType }: any) => {
+      dispatch(IncomingVideoCalls({ ...from, roomId, callType }));
+    });
+  }, [socket]);
 
-      // if (scrollContainer) {
-      //   const scrollHeight = scrollContainer.scrollHeight;
-      //   const containerHeight = scrollContainer.clientHeight;
-      //   const maxScrollTop = scrollHeight - containerHeight;
-      //   scrollContainer.scrollTop = maxScrollTop;
-      // }
-
-      // scrollToLastMessage
-      // messageScroll?.current?.scrollIntoView({ behavior: 'smooth' });
-      // messageScroll?.current?.scrollTop = 200;
-      // messageS?.current?.scrollTo({
-      //   behavior: 'smooth',
-      //   top: messageScroll?.current?.offsetTop,
-      // });
-    },
+  socket?.on('end_voice_call', () => {
+    dispatch(EndVCall(null));
   });
+  socket?.on('end_video_call', () => {
+    console.log('weeeeeeeeeeeeeeeeeeeee');
+    dispatch(EndVideoCall(null));
+  });
+  socket?.on('voice_call_rejected', () => {
+    dispatch(EndVCall(null));
+  });
+  socket?.on('accept-call', () => {
+    dispatch(updateVoiceCall(''));
+  });
+  socket?.on('accept-Vcall', () => {
+    dispatch(updateVideoCall(''));
+  });
+  socket?.on('video_call_rejected', () => {
+    dispatch(EndVideoCall(''));
+  });
+
+  const HandleOutgoingVoiceCall = () => {
+    if (!outgoingVideoCall || ongoingVideoCall) {
+      dispatch(
+        OutGoingVCall({
+          ...activeChat,
+          type: 'out-going',
+          callType: 'voice',
+          roomId: Date.now(),
+        })
+      );
+    }
+  };
+
+  const HandleOutgoingVideoCall = () => {
+    if (!outgoingCall || ongoingVoiceCall) {
+      dispatch(
+        OutGoingVideoCall({
+          ...activeChat,
+          type: 'out-going',
+          callType: 'video',
+          roomId: Date.now(),
+        })
+      );
+    }
+  };
 
   if (!session) {
     return (
@@ -149,8 +302,8 @@ export default function Home() {
   }
   if (activeChat) {
     return (
-      <main className="lg:flex h-screen bg-chat-bg w-full overflow-y-hidden hidden flex-col items-center gap-0  ">
-        <div className="w-full h-[80px] items-center flex justify-between border-t-[1px] border-b-[1px] px-7 py-3 border-[#b4b4b4] bg-[#FAF9F6]">
+      <main className="lg:flex h-screen bg-chat-bg relative w-full overflow-y-hidden hidden flex-col items-center gap-0  ">
+        <div className="w-full h-[80px] border-[1px] items-center flex justify-between border-t-[1px] border-b-[1px] px-7 py-3 border-[#b4b4b4] bg-[#FAF9F6]">
           <div className="flex items-center gap-3">
             <Image
               src={activeChat.avatar}
@@ -172,21 +325,45 @@ export default function Home() {
                 title="Video Call"
                 className="w-[50%] hover:bg-[#a1a1a1] h-full p-4"
               >
-                <IoVideocamOutline className="w-[20px] h-[20px] mx-auto " />
+                <IoVideocamOutline
+                  onClick={HandleOutgoingVideoCall}
+                  className="w-[20px] h-[20px] mx-auto "
+                />
               </div>
               <div
                 title="Voice Call"
                 className="w-[50%] hover:bg-[#a1a1a1] h-full p-4"
               >
-                <IoCallOutline className="w-[20px] h-[20px] mx-auto" />
+                <IoCallOutline
+                  onClick={HandleOutgoingVoiceCall}
+                  className="w-[20px] h-[20px] mx-auto"
+                />
               </div>
             </div>
             <LuSearch />
           </div>
         </div>
+        {/* outgoing call */}
+
+        {outgoingCall && (
+          <VoiceCall />
+          // <div className="absolute w-[50%] h-[65%] bg-black top-[40px]"></div>
+        )}
+        {incomingCall && (
+          <IncomingVoiceCalls />
+          // <div className="absolute w-[50%] h-[65%] bg-black top-[40px]"></div>
+        )}
+        {ongoingVoiceCall && <OngoingVoiceCall />}
+        {outgoingVideoCall && <VideoCall />}
+        {incomingvideoCall && <IncomingVideoCall />}
+        {ongoingVideoCall && <OngoingVideoCall />}
+        {/* incoming call
+        {incomingCall && (
+          <div className="absolute w-[50%] h-[65%] bg-black top-[40px]"></div>
+        )} */}
         <div
           ref={messageS}
-          className=" px-5 h-[680px] py-3 overflow-y-scroll  w-full items-start justify-start font-mono text-sm flex flex-col"
+          className=" px-5 h-[680px] py-3 overflow-y-scroll border-[#7e2b2b]  w-full items-start justify-start font-mono text-sm flex flex-col"
         >
           {activeMessages?.length > 0 && (
             <div className="w-full h-full flex flex-col m-0  gap-3 items-start justify-start ">
@@ -226,27 +403,58 @@ export default function Home() {
             </div>
           )}
         </div>
-        <div className="w-full h-[50px] items-center flex justify-between border-t-[1px] border-b-[1px] px-7 py-3 border-[#b4b4b4] bg-[#FAF9F6]">
-          <div className="flex gap-3">
-            <CiFaceSmile className="text-[#5d5c5c] w-[25px] h-[25px] font-[200]" />
-            <TiAttachment className="text-[#5d5c5c] w-[25px] h-[25px] font-[200]" />
+        {openEmoji && (
+          <EmojiPicker
+            openEmoji={openEmoji}
+            setopenEmoji={setopenEmoji}
+            setaddComment={setaddComment}
+          />
+        )}
+        {PhotoMsg && <PhotoPicker change={photoPickChange} />}
+        {audioMessage && <AudioMessage hide={setaudioMessage} />}
+        {!audioMessage && (
+          <div className="w-full h-[50px] items-center flex justify-between border-t-[1px] border-b-[1px] px-7 py-3 border-[#b4b4b4] bg-[#FAF9F6]">
+            <div className="flex gap-3">
+              <CiFaceSmile
+                onClick={() => {
+                  setopenEmoji(true);
+                }}
+                className="text-[#5d5c5c] w-[25px] h-[25px] font-[200]"
+              />
+              <TiAttachment
+                onClick={() => {
+                  setPhotoMsg(true);
+                }}
+                className="text-[#5d5c5c] w-[25px] h-[25px] font-[200]"
+              />
+            </div>
+            <div className="w-[80%]">
+              <input
+                className="w-full bg-transparent outline-none"
+                placeholder="Type a message"
+                autoComplete="off"
+                value={addComment}
+                onChange={(e) => {
+                  setaddComment(e.target.value);
+                }}
+              />
+            </div>
+            <div className="flex gap-3 items-center ">
+              {addComment.length === 0 && (
+                <CiMicrophoneOn
+                  onClick={() => {
+                    setaudioMessage(true);
+                  }}
+                  className="text-[#5d5c5c] w-[25px] h-[25px] font-[200]"
+                />
+              )}
+              <VscSend
+                onClick={handleSubmit}
+                className="text-[#5d5c5c] w-[25px] h-[25px] font-[200]"
+              />
+            </div>
           </div>
-          <div className="w-[80%]">
-            <input
-              className="w-full bg-transparent outline-none"
-              placeholder="Type a message"
-              autoComplete="off"
-              {...formik.getFieldProps('message')}
-            />
-          </div>
-          <div className="flex gap-3 items-center ">
-            <CiMicrophoneOn className="text-[#5d5c5c] w-[25px] h-[25px] font-[200]" />
-            <VscSend
-              onClick={formik.handleSubmit}
-              className="text-[#5d5c5c] w-[25px] h-[25px] font-[200]"
-            />
-          </div>
-        </div>
+        )}
       </main>
     );
   }

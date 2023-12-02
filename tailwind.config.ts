@@ -17,6 +17,7 @@ const config: Config = {
         'whatapp-bg': "url('/peakpx.jpg')",
         'chat-bg': "url('/chatbg.jpg')",
         'chat-plain': "url('/chatbg-plain.jpg')",
+        'black-bg': "url('/what_black.jpg')",
       },
     },
   },

@@ -3,8 +3,8 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { MdOutlineCallEnd } from 'react-icons/md';
 import { useDispatch } from 'react-redux';
-import { EndCall } from '@/reduxReducers/Reducers';
-import { useSelector } from 'react-redux';
+import { EndVideoCall } from '@/Redux/Slices/Calls';
+import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
 import axios from 'axios';
 const OngoingVideoCall = () => {
   const [Token, setToken] = useState(undefined);
@@ -13,11 +13,17 @@ const OngoingVideoCall = () => {
   const [publishStream, setpublishStream] = useState(undefined);
   const dispatch = useDispatch();
 
+  const { activeMessages, sockett: socket } = useAppSelector(
+    (state) => state.Messages
+  );
   const {
-    Socketinfo,
-    OngoingVideoCall: data,
-    ReducerSesiion,
-  } = useSelector((state) => state.User);
+    outgoingCall,
+    incomingCall,
+    ongoingVoiceCall,
+    outgoingVideoCall,
+    incomingvideoCall,
+    ongoingVideoCall: data,
+  } = useAppSelector((state) => state.Calls);
 
   const getToken = async () => {
     try {
@@ -67,7 +73,7 @@ const OngoingVideoCall = () => {
             zg.destroyStream(localStream);
             zg.stopPublishingStream(streamList[0].streamID);
             zg.logoutRoom(data.roomId);
-            dispatch(EndCall());
+            dispatch(EndVideoCall());
           }
         }
       );
@@ -120,7 +126,7 @@ const OngoingVideoCall = () => {
     zgVar.destroyStream(localStream);
     zgVar.stopPublishingStream(publishStream);
     zgVar.logoutRoom(data.roomId.toString());
-    dispatch(EndCall());
+    dispatch(EndVideoCall(''));
     Socketinfo.emit('end_call', { to: data.id });
   };
   return (

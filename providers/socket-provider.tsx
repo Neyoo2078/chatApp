@@ -28,19 +28,20 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (currentUser) {
-      const SocketInstance = new (ClientIo as any)(
-        process.env.NEXT_PUBLIC_SITE_URL,
-        { path: '/api/socket/io', addTrailingSlash: false }
-      );
+      // const SocketInstance = new (ClientIo as any)(
+      //   process.env.NEXT_PUBLIC_SITE_URL,
+      //   { addTrailingSlash: false }
+      // );
+      const SocketInstance = ClientIo('http://localhost:5000');
       console.log({ evvvv: process.env.NEXT_PUBLIC_SITE_URL });
 
-      SocketInstance.on('connect', (socket: any) => {
+      SocketInstance.on('connect', () => {
         setisConnected(true);
-        console.log({ newSocket: socket });
       });
       SocketInstance.on('disconnect', () => {
         setisConnected(false);
       });
+      // @ts-ignore
       setSocket(SocketInstance);
     }
   }, [currentUser]);

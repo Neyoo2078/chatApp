@@ -3,26 +3,34 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { MdOutlineCallEnd } from 'react-icons/md';
 import { useDispatch, useSelector } from 'react-redux';
-import { EndCall } from '@/reduxReducers/Reducers';
+import { EndVCall } from '@/Redux/Slices/Calls';
 import axios from 'axios';
+import { useAppDispatch, useAppSelector } from '@/Redux/hooks';
 
 const VoiceCall = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [CallAccepted, setCallAccepted] = useState(false);
   const [Token, setToken] = useState(undefined);
   const [zgVar, setzgVar] = useState(undefined);
   const [localStream, setlocalStream] = useState(undefined);
   const [publishStream, setpublishStream] = useState(undefined);
-  const {
-    Socketinfo,
-    voiceCall: data,
-    ReducerSesiion,
-  } = useSelector((state) => state.User);
+
+  // useSelector
+  const { activeChat, onlineUser, currentUser } = useAppSelector(
+    (state) => state.Users
+  );
+  const { activeMessages, sockett: socket } = useAppSelector(
+    (state) => state.Messages
+  );
+
+  const { outgoingCall: data, incomingCall } = useAppSelector(
+    (state) => state.Calls
+  );
 
   const getToken = async () => {
     try {
       const { data: token } = await axios.get(
-        `/generate/token/${ReducerSesiion._id}`
+        `/generate/token/${currentUser._id}`
       );
       console.log({ token });
       setToken(token);
@@ -65,16 +73,17 @@ const VoiceCall = () => {
             zg.destroyStream(localStream);
             zg.stopPublishingStream(streamList[0].streamID);
             zg.logoutRoom(data.roomId);
-            dispatch(EndCall());
+            dispatch(EndVCall());
           }
         }
       );
+
       await zg.loginRoom(
         data.roomId.toString(),
         Token,
         {
-          userID: ReducerSesiion._id.toString(),
-          userName: ReducerSesiion.displayName,
+          userID: currentUser._id.toString(),
+          userName: currentUser.displayName,
         },
         { userUpdate: true }
       );
@@ -112,12 +121,12 @@ const VoiceCall = () => {
   }, [Token]);
 
   useEffect(() => {
-    Socketinfo?.emit('outgoing-voice-call', {
+    socket?.emit('outgoing-voice-call', {
       to: data._id,
       from: {
-        id: ReducerSesiion._id,
-        avatar: ReducerSesiion.avatar,
-        displayName: ReducerSesiion.displayName,
+        id: currentUser._id,
+        avatar: currentUser.avatar,
+        displayName: currentUser.displayName,
       },
       callType: data.callType,
       roomId: data.roomId,
@@ -125,14 +134,14 @@ const VoiceCall = () => {
   }, []);
 
   const EndCalls = () => {
-    dispatch(EndCall());
+    dispatch(EndVCall(null));
 
-    Socketinfo?.emit('end_call', {
+    socket?.emit('end_call', {
       to: data._id,
       from: {
-        id: ReducerSesiion._id,
-        avatar: ReducerSesiion.avatar,
-        displayName: ReducerSesiion.displayName,
+        id: currentUser._id,
+        avatar: currentUser.avatar,
+        displayName: currentUser.displayName,
       },
       callType: data.callType,
       roomId: data.roomId,
@@ -146,7 +155,7 @@ const VoiceCall = () => {
   };
 
   return (
-    <div className="w-full text-white bg-chat-bg h-screen flex gap-3 flex-col items-center justify-center">
+    <div className="absolute w-[50%] h-[65%] flex   flex-col justify-center items-center bg-black bg-black-bg top-[40px] bg-contain">
       <div className="my-15">
         <Image src={data.avatar} width={120} height={120} alt='"avatar' />
       </div>
@@ -154,9 +163,9 @@ const VoiceCall = () => {
         <div className="absolute bottom-5 right-5" id="local-audio"></div>
       </div>
       <div className=" flex flex-col w-full items-center justify-center">
-        <h1 className="text-[40px] text-black">{data.displayName}</h1>
-        <h1 className="text-[20px] text-black">
-          {data.callType === 'on_going' ? 'on going Call' : 'Calling'}
+        <h1 className="text-[40px] text-white">{data.displayName}</h1>
+        <h1 className="text-[20px] text-white">
+          {data.callType === 'on_going' ? 'on going Call' : 'Calling...'}
         </h1>
       </div>
 

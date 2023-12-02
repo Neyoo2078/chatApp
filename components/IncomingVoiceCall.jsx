@@ -2,14 +2,26 @@
 import { useSelector } from 'react-redux';
 import Image from 'next/image';
 import { useDispatch } from 'react-redux';
-import { SetVoiceCall } from '@/reduxReducers/Reducers';
-import { SetIncomingVoiceCall } from '@/reduxReducers/Reducers';
-import { EndCall } from '@/reduxReducers/Reducers';
-import VoiceCall from './VoiceCall';
-import { SetOngoingVoiceCall } from '@/reduxReducers/Reducers';
+import { EndVCall as EndCall } from '@/Redux/Slices/Calls';
+import {
+  IncomingVoiceCall as IncomingVoiceCalls,
+  OngoingVoiceCall,
+} from '@/Redux/Slices/Calls';
+import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
 
 const IncomingVoiceCall = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
+
+  // useSelector
+  const { activeChat, onlineUser, currentUser } = useAppSelector(
+    (state) => state.Users
+  );
+  const { activeMessages, sockett: socket } = useAppSelector(
+    (state) => state.Messages
+  );
+
+  const { outgoingCall, incomingCall } = useAppSelector((state) => state.Calls);
+
   //   const cc = {
   //     to: data._id,
   //     from: {
@@ -20,29 +32,27 @@ const IncomingVoiceCall = () => {
   //     callType: data.callType,
   //     roomId: data.roomId,
   //   };
-  const { incomingVoiceCall, Socketinfo } = useSelector((state) => state.User);
+
   const acceptCall = () => {
-    dispatch(
-      SetOngoingVoiceCall({ ...incomingVoiceCall, callType: 'in-coming' })
-    );
-    Socketinfo.emit('accept-incoming-call', { id: incomingVoiceCall.id });
-    dispatch(SetIncomingVoiceCall(undefined));
+    dispatch(OngoingVoiceCall({ ...incomingCall, callType: 'on_going' }));
+    socket.emit('accept-incoming-call', { id: incomingCall.id });
+    dispatch(IncomingVoiceCalls(undefined));
   };
 
   const rejectCall = () => {
-    Socketinfo.emit('reject-voice-call', { from: incomingVoiceCall.id });
+    socket.emit('reject-voice-call', { from: incomingCall.id });
     dispatch(EndCall());
   };
   return (
     <div className="absolute w-[400px] h-[200px] text-white gap-2 flex-col  flex justify-center items-center bg-black bottom-[100px] m-auto ">
       <Image
-        src={incomingVoiceCall.avatar}
+        src={incomingCall.avatar}
         alt='"avatar'
         width={70}
         height={70}
         className="rounded-full"
       />
-      <div>{incomingVoiceCall.displayName}</div>
+      <div>{incomingCall.displayName}</div>
       <div className="text-xs ">Incoming Voice Call</div>
       <div className="flex gap-2 mt-2">
         <button

@@ -20,10 +20,7 @@ const ContactList = ({ items, i }) => {
   const [user, setuser] = useState(undefined);
   const [CurrentUserLastMessage, setCurrentUserLastMessage] = useState(false);
   // const lastMess = ChatMessages[ChatMessages.length - 1];
-  console.log({ LastMessage, items });
-  console.log({ CurrentUserLastMessage });
 
-  console.log({ user });
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -42,7 +39,6 @@ const ContactList = ({ items, i }) => {
       user?._id === LastMessage?.senderId ||
       user?._id === LastMessage?.receiverId;
     setCurrentUserLastMessage(AA);
-    console.log({ AA });
   }, [user]);
 
   useEffect(() => {

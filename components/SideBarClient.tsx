@@ -6,15 +6,16 @@ import { getAllUsers } from '@/lib/Actions/UserActions';
 import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
 import ContactCard from './ContactCard';
 import { LuSearch } from 'react-icons/lu';
-import { AddtoChatList } from '@/Redux/Slices/Users';
+import { AddtoChatList, Chatlist } from '@/Redux/Slices/Users';
 import { IoMdArrowBack } from 'react-icons/io';
 import { io } from 'socket.io-client';
 import { GetUserByEmail } from '@/lib/Actions/UserActions';
 import { CurrentUserDetails, OnlineUsers } from '@/Redux/Slices/Users';
 import { SocketReducer } from '@/Redux/Slices/Messages';
 import { useSocket } from '@/providers/socket-provider';
+import { calculateTime } from '@/utils/CalculateTime';
 
-const SideBarClient = ({ GetCUser, Auser }: any) => {
+const SideBarClient = ({ GetCUser, Auser, Contacts }: any) => {
   const { data: session } = useSession();
 
   // use States
@@ -26,27 +27,30 @@ const SideBarClient = ({ GetCUser, Auser }: any) => {
   const { activeChat, userChatList, currentUser, onlineUser } = useAppSelector(
     (state) => state.Users
   );
-  console.log({ onlineUser });
-  const { activeMessages, sockett } = useAppSelector((state) => state.Messages);
+
+  const { activeMessages, sockett: socket } = useAppSelector(
+    (state) => state.Messages
+  );
+
   // initiaolize dispatch
   const dispatch = useAppDispatch();
 
-  const { isConnected, socket } = useSocket();
-  console.log({ isConnected, socket });
+  // const { isConnected, socket } = useSocket();
+  // console.log({ isConnected, socket });
   // // Socket Io
   // var socket: any;
 
   useEffect(() => {
     dispatch(CurrentUserDetails(GetCUser));
   }, [GetCUser]);
-  // const AA = process.env.SERVER_URL;
-  // console.log({ AA });
-  // useEffect(() => {
-  //   if (currentUser) {
-  //     socket = io('http://localhost:5000');
-  //     dispatch(SocketReducer(socket));
-  //   }
-  // }, [currentUser]);
+  const AA = process.env.SERVER_URL;
+
+  useEffect(() => {
+    if (currentUser) {
+      const sockett = io('http://localhost:5000');
+      dispatch(SocketReducer(sockett));
+    }
+  }, [currentUser]);
 
   // const handleJoin = () => {
   //   if (session) {
@@ -56,19 +60,17 @@ const SideBarClient = ({ GetCUser, Auser }: any) => {
   // };
   const handleJoin = () => {
     if (socket) {
-      console.log('entered join room');
-      console.log({ joinId: currentUser?._id });
       socket?.emit('join_room', currentUser?._id);
     }
   };
 
   useEffect(() => {
-    if (socket) {
-      socket.on('online_users', (data: any) => {
+    if (currentUser && socket) {
+      socket?.on('online_users', (data: any) => {
         dispatch(OnlineUsers(data));
       });
     }
-  }, [socket]);
+  }, [socket, currentUser]);
 
   useEffect(() => {
     if (currentUser && socket) {
@@ -77,17 +79,31 @@ const SideBarClient = ({ GetCUser, Auser }: any) => {
   }, [currentUser, socket]);
   // Socket Io Ends
 
+  // useEffect(() => {
+  //   const filterAllUsers = AllUser.filter((items: any) => {
+  //     const exist = userChatList.find((item: any) => item._id === items._id);
+  //     if (!exist) {
+  //       return items;
+  //     }
+  //   });
+
+  //   setfilterUser(filterAllUsers)
+  // }, [AllUser, userChatList]);
+  // useEffect to filter contacts
+
   useEffect(() => {
-    const filterAllUsers = AllUser.filter((items: any) => {
-      const exist = userChatList.find((item: any) => item._id === items._id);
+    const filterContact = AllUser?.filter((items: any) => {
+      const exist = userChatList?.find((item: any) => item._id === items._id);
       if (!exist) {
         return items;
       }
     });
+    setfilterUser(filterContact);
+  }, [userChatList]);
 
-    setfilterUser(filterAllUsers);
-  }, [AllUser, userChatList]);
-
+  useEffect(() => {
+    dispatch(Chatlist(Contacts));
+  }, [Contacts]);
   // useEffect(() => {
   //   if (session) {
   //     Auser();
@@ -149,7 +165,7 @@ const SideBarClient = ({ GetCUser, Auser }: any) => {
       {!searchFocus && (
         <div className="flex flex-col gap-1 h-[80%] p-2  ">
           {userChatList?.map((items: any, i: number) => (
-            <ContactCard key={i} items={items} />
+            <ContactCard key={i} items={items.info} messages={items.messages} />
           ))}
         </div>
       )}

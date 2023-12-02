@@ -4,11 +4,15 @@ import { MdSend } from 'react-icons/md';
 import { useState, useRef, useEffect } from 'react';
 import { FaPlay, FaStop, FaMicrophone, FaRegPauseCircle } from 'react-icons/fa';
 import WaveSurfer from 'wavesurfer.js';
+import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
-import { useSelector } from 'react-redux';
-import { useDispatch } from 'react-redux';
-import { UpdateChatMessage } from '@/reduxReducers/Reducers';
+import { usePathname } from 'next/navigation';
+import { CreateDbMessage } from '@/lib/Actions/MessageActions';
+import {
+  DbActiveMessages,
+  UpdateActiveMessages,
+} from '@/Redux/Slices/Messages';
 
 const AudioMessage = ({ hide }) => {
   const [Recording, setRecording] = useState(false);
@@ -21,15 +25,23 @@ const AudioMessage = ({ hide }) => {
   const [RenderedAudio, setRenderedAudio] = useState(null);
 
   const { data: session } = useSession();
+  const pathname = usePathname();
 
-  const { currentChat } = useSelector((state) => state.User);
+  // const { currentChat } = useAppSelector((state) => state.User);
+  const { activeChat, onlineUser, currentUser } = useAppSelector(
+    (state) => state.Users
+  );
+  const { activeMessages, sockett: socket } = useAppSelector(
+    (state) => state.Messages
+  );
+
   // Ref,s
   const audioRef = useRef(null);
   const mediaRecorderRef = useRef(null);
 
   //   Dispatch
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const IconStyle = 'w-[25px] h-[25px] cursor-pointer';
 
@@ -101,29 +113,32 @@ const AudioMessage = ({ hide }) => {
 
     try {
       const res = await axios.post(
-        `${process.env.BaseUrl}/audio/add-image-message/?from=${session?.user.id}&to=${currentChat?._id}`,
+        `${process.env.NEXT_PUBLIC_SITE_URL}/audio/add-image-message/?from=${activeChat?._id}&to=${currentUser?._id}`,
         formdata,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
+      const ress = await CreateDbMessage({
+        senderId: currentUser?._id,
+        receiverId: activeChat?._id,
+        message: res.data?.message,
+        path: pathname,
+        messageType: 'audio',
+        messageStatus: 'sent',
+      });
 
-      if (res.status === '200') {
-        await Socketinfo.emit('send-msg', {
-          to: currentChat._id,
-          from: session?.user.id,
-          message: res.data?.message,
-          messageType: 'image',
-          messageStatus: 'read',
-        });
+      // dispatch the message to current user
+      if (onlineUser?.onlineUser?.includes(activeChat?._id)) {
+        dispatch(
+          UpdateActiveMessages({
+            ...JSON.parse(ress),
+            messageStatus: 'delivered',
+          })
+        );
+      } else {
+        dispatch(UpdateActiveMessages(JSON.parse(ress)));
       }
-      dispatch(
-        UpdateChatMessage({
-          receiverId: currentChat._id,
-          senderId: session?.user.id,
-          message: res.data?.message,
-          messageType: 'audio',
-          messageStatus: 'sent',
-        })
-      );
+      // send through socket if the reciever is online
+      socket?.emit('send_msg', JSON.parse(ress));
       hide(false);
     } catch (error) {
       console.log(error);

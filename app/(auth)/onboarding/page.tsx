@@ -33,7 +33,7 @@ const page = () => {
   const [updateData, setupDate] = useState<any>({
     avatar: '/default_avatar.png',
   });
-  console.log({ userData });
+
   // get userb data fro DB
   const getUserFromDb = async () => {
     const res: any = await getUser({
@@ -79,7 +79,6 @@ const page = () => {
     },
     validate: Validate,
   });
-  console.log(formik.values.about);
 
   useEffect(() => {
     if (GrabPhoto) {
@@ -112,7 +111,7 @@ const page = () => {
     reader.readAsDataURL(file);
     setTimeout(() => {
       setimage(data.src);
-    }, 100);
+    }, 1000);
   };
   return (
     <div className="flex h-screen bg-whatapp-bg w-full m-auto flex-col items-center justify-center p-24">

@@ -13,7 +13,6 @@ const contactListVoiceMessage = ({ items }) => {
 
   useEffect(() => {
     if (waveform.current) {
-      console.log('we entered');
       const audioUrl = `${process.env.BaseUrl}/${items?.message}`;
       const audio = new Audio(audioUrl);
 
