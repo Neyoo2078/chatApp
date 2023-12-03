@@ -3,6 +3,7 @@ import { getAllUsers, GetUserByEmail } from '@/lib/Actions/UserActions';
 import SideBarClient from './SideBarClient';
 import { authOptions } from '@/lib/auth';
 import { getConatctFromMessage } from '@/lib/Actions/MessageActions';
+import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
 
 const SideBar = async () => {
   const session = await getServerSession(authOptions);
@@ -15,7 +16,12 @@ const SideBar = async () => {
   const UserContact = JSON.parse(Contacts);
 
   return (
-    <div className=" md:h-screen   h-screen relative overflow-y-auto flex flex-col  border-[1px]  border-[#b4b4b4]  w-full lg:w-[400px] bg-[#FAF9F6]">
+    <div
+      id="sidebar"
+      className={
+        ' md:h-screen h-screen relative flex flex-col  border-[1px]  border-[#b4b4b4]  w-full lg:w-[400px] bg-[#FAF9F6]'
+      }
+    >
       <SideBarClient GetCUser={GetCUser} Auser={Auser} Contacts={UserContact} />
     </div>
   );

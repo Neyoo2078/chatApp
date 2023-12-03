@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { addAllUsers } from '@/lib/Actions/UserActions';
 import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
 import { ActiveChat } from '@/Redux/Slices/Users';
+import { IoMdArrowBack } from 'react-icons/io';
 import dateFormat, { masks } from 'dateformat';
 import { IoVideocamOutline, IoCallOutline } from 'react-icons/io5';
 import { LuSearch } from 'react-icons/lu';
@@ -302,8 +303,18 @@ export default function Home() {
   }
   if (activeChat) {
     return (
-      <main className="lg:flex h-screen bg-chat-bg relative w-full overflow-y-hidden hidden flex-col items-center gap-0  ">
-        <div className="w-full h-[80px] border-[1px] items-center flex justify-between border-t-[1px] border-b-[1px] px-7 py-3 border-[#b4b4b4] bg-[#FAF9F6]">
+      <main
+        className={`lg:flex h-screen bg-chat-bg relative w-full overflow-y-hidden ${
+          activeChat ? 'flex' : 'hidden'
+        } flex-col items-center gap-0  `}
+      >
+        <div className="w-full h-[10%] border-[1px] items-center flex justify-between border-t-[1px] border-b-[1px] px-7 py-3 border-[#b4b4b4] bg-[#FAF9F6]">
+          <IoMdArrowBack
+            onClick={() => {
+              dispatch(ActiveChat(null));
+            }}
+            className="md:hidden w-[25px] h-[25px]"
+          />
           <div className="flex items-center gap-3">
             <Image
               src={activeChat.avatar}
@@ -316,11 +327,11 @@ export default function Home() {
           <div className="flex gap-2 items-center">
             {onlineUser?.onlineUser.includes(activeChat._id) && (
               <div className="flex gap-1 items-center justify-center">
-                <h1>online</h1>
+                <h1 className="md:block hidden">online</h1>
                 <BsDot className="text-[#37d072] w-[25px] h-[25px]" />
               </div>
             )}
-            <div className="flex w-[120px] justify-around border-[1px] ">
+            <div className="flex w-[90px] md:w-[120px] justify-around border-[1px] ">
               <div
                 title="Video Call"
                 className="w-[50%] hover:bg-[#a1a1a1] h-full p-4"
@@ -363,10 +374,10 @@ export default function Home() {
         )} */}
         <div
           ref={messageS}
-          className=" px-5 h-[680px] py-3 overflow-y-scroll border-[#7e2b2b]  w-full items-start justify-start font-mono text-sm flex flex-col"
+          className=" px-5 h-[84%] py-3 overflow-y-scroll border-[#7e2b2b]  w-full items-start justify-start font-mono text-sm flex flex-col"
         >
           {activeMessages?.length > 0 && (
-            <div className="w-full h-full flex flex-col m-0  gap-3 items-start justify-start ">
+            <div className="w-full  flex flex-col m-0  gap-3 items-start justify-start ">
               {activeMessages.map((items: any, i: number) => (
                 <div
                   className={`w-full flex   ${
@@ -413,13 +424,13 @@ export default function Home() {
         {PhotoMsg && <PhotoPicker change={photoPickChange} />}
         {audioMessage && <AudioMessage hide={setaudioMessage} />}
         {!audioMessage && (
-          <div className="w-full h-[50px] items-center flex justify-between border-t-[1px] border-b-[1px] px-7 py-3 border-[#b4b4b4] bg-[#FAF9F6]">
+          <div className="w-full h-[8%] bottom-0 absolute items-center flex justify-evenly md:justify-between border-t-[1px] border-b-[1px] px-5 md:px-7 py-3 border-[#b4b4b4] bg-[#FAF9F6]">
             <div className="flex gap-3">
               <CiFaceSmile
                 onClick={() => {
                   setopenEmoji(true);
                 }}
-                className="text-[#5d5c5c] w-[25px] h-[25px] font-[200]"
+                className="text-[#5d5c5c] hidden md:block w-[25px] h-[25px] font-[200]"
               />
               <TiAttachment
                 onClick={() => {

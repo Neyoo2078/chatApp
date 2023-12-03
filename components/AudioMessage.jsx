@@ -43,7 +43,7 @@ const AudioMessage = ({ hide }) => {
 
   const dispatch = useAppDispatch();
 
-  const IconStyle = 'w-[25px] h-[25px] cursor-pointer';
+  const IconStyle = ' w-[17px] h-[17px] md:w-[25px] md:h-[25px] cursor-pointer';
 
   //   HANDLERS
 
@@ -214,7 +214,7 @@ const AudioMessage = ({ hide }) => {
   };
 
   return (
-    <div className="flex w-full items-center gap-2 justify-end p-2 ">
+    <div className="flex w-full items-center gap-2 justify-end p-2 bg-slate-300 ">
       <BsTrash3
         onClick={() => {
           hide(false);
@@ -223,7 +223,7 @@ const AudioMessage = ({ hide }) => {
         className={IconStyle}
       />
 
-      <div className="w-70 bg-slate-600 flex justify-end gap-2 rounded-full p-2 items-center ">
+      <div className="w-70 bg-slate-600  h-[40px] md:h-[60px] flex justify-end gap-2 rounded-full p-2 items-center ">
         {Recording ? (
           <div className="flex animate-pulse gap-1 text-red-500 text-center">
             <h1>Recording</h1> <span>{RecordingDuration}s</span>
@@ -244,7 +244,7 @@ const AudioMessage = ({ hide }) => {
             )}
           </div>
         )}
-        <div className="w-60 " id="waveBox" hidden={Recording} />
+        <div className="  w-40 md:w-60  " id="waveBox" hidden={Recording} />
         {RecordedAudio && isPlaying && (
           <span>{formatTime(CurrentPlayBackTime)}</span>
         )}

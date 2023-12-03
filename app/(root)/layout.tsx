@@ -6,6 +6,7 @@ import ButtomBar from '@/components/ButtomBar';
 import SessionProvider from '@/providers/SessionProvider';
 import Store from '@/Redux/ReduxProvider';
 import { SocketProvider } from '@/providers/socket-provider';
+import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
 
 const inter = Inter({ subsets: ['latin'] });
 

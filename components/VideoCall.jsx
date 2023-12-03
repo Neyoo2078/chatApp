@@ -30,13 +30,34 @@ const VideoCall = () => {
   const getToken = async () => {
     try {
       const { data: tokens } = await axios.get(
-        `${process.env.BaseUrl}/generate/token/${ReducerSesiion._id}`
+        `${process.env.BaseUrl}/generate/token/${currentUser._id}`
       );
 
       setToken(tokens);
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const EndCalls = () => {
+    if (data.callType === 'on_going' && zgVar && localStream && publishStream) {
+      zgVar.destroyStream(localStream);
+      zgVar.stopPublishingStream(publishStream);
+      zgVar.logoutRoom(data.roomId.toString());
+    }
+
+    dispatch(EndVideoCall());
+
+    socket?.emit('end_v_call+', {
+      to: data._id,
+      from: {
+        id: currentUser._id,
+        avatar: currentUser.avatar,
+        displayName: currentUser.displayName,
+      },
+      callType: data.callType,
+      roomId: data.roomId,
+    });
   };
 
   const StartCall = async () => {
@@ -74,7 +95,7 @@ const VideoCall = () => {
             zg.destroyStream(localStream);
             zg.stopPublishingStream(streamList[0].streamID);
             zg.logoutRoom(data.roomId);
-            dispatch(EndCall());
+            EndCalls();
           }
         }
       );
@@ -82,8 +103,8 @@ const VideoCall = () => {
         data.roomId.toString(),
         Token,
         {
-          userID: ReducerSesiion._id.toString(),
-          userName: ReducerSesiion.displayName,
+          userID: currentUser._id.toString(),
+          userName: currentUser.displayName,
         },
         { userUpdate: true }
       );
@@ -136,26 +157,6 @@ const VideoCall = () => {
     });
   }, []);
 
-  const EndCalls = () => {
-    if (data.callType === 'on_going' && zgVar && localStream && publishStream) {
-      zgVar.destroyStream(localStream);
-      zgVar.stopPublishingStream(publishStream);
-      zgVar.logoutRoom(data.roomId.toString());
-    }
-
-    dispatch(EndVideoCall());
-
-    socket?.emit('end_v_call', {
-      to: data._id,
-      from: {
-        id: currentUser._id,
-        avatar: currentUser.avatar,
-        displayName: currentUser.displayName,
-      },
-      callType: data.callType,
-      roomId: data.roomId,
-    });
-  };
   return (
     <div className="w-full text-white bg-chat-bg h-screen flex gap-3 flex-col items-center justify-center">
       <div className=" flex flex-col w-full items-center justify-center">
