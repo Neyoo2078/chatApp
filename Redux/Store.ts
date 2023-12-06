@@ -5,9 +5,15 @@ import { applyMiddleware } from '@reduxjs/toolkit';
 import UserSlice from './Slices/Users';
 import MessageSlice from './Slices/Messages';
 import CallSlice from './Slices/Calls';
+import ZegoSlice from './Slices/Zego';
 
 export const store = configureStore({
-  reducer: { Users: UserSlice, Messages: MessageSlice, Calls: CallSlice },
+  reducer: {
+    Users: UserSlice,
+    Messages: MessageSlice,
+    Calls: CallSlice,
+    Zego: ZegoSlice,
+  },
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

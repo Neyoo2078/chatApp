@@ -27,10 +27,11 @@ const VoiceCall = () => {
     (state) => state.Calls
   );
 
+  console.log({ outgoingCall: data });
   const getToken = async () => {
     try {
       const { data: token } = await axios.get(
-        `/generate/token/${currentUser._id}`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/generate/token/${currentUser._id}`
       );
       console.log({ token });
       setToken(token);
@@ -42,7 +43,7 @@ const VoiceCall = () => {
   const StartCall = async () => {
     import('zego-express-engine-webrtc').then(async ({ ZegoExpressEngine }) => {
       const zg = new ZegoExpressEngine(
-        process.env.ZEGO_APP_ID,
+        parseInt(process.env.ZEGOAPP_ID),
         process.env.ZEGO_SERVER_SECRET
       );
       setzgVar(zg);
@@ -105,15 +106,17 @@ const VoiceCall = () => {
       td.srcObject = localStreams;
       const streamID = 123 + Date.now();
       setpublishStream(streamID);
-      zg.startPublishingStream(streamID, localStreams);
+      zg.startPublishingStream(streamID.toString(), localStreams);
     });
   };
 
   useEffect(() => {
     if (data.callType === 'on_going') {
+      console.log('we gettinggg token');
       getToken();
     }
   }, [data]);
+
   useEffect(() => {
     if (Token) {
       StartCall();
@@ -134,6 +137,7 @@ const VoiceCall = () => {
   }, []);
 
   const EndCalls = () => {
+    console.log('clicked');
     dispatch(EndVCall(null));
 
     socket?.emit('end_call', {

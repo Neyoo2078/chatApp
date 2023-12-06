@@ -2,19 +2,28 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { MdOutlineCallEnd } from 'react-icons/md';
-import { useDispatch } from 'react-redux';
 import { EndVideoCall } from '@/Redux/Slices/Calls';
 import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
 import axios from 'axios';
+import {
+  zgVars,
+  localStreams as Lstreams,
+  publishStreams,
+  RoomIds,
+} from '@/Redux/Slices/Zego';
 const OngoingVideoCall = () => {
   const [Token, setToken] = useState(undefined);
   const [zgVar, setzgVar] = useState(undefined);
   const [localStream, setlocalStream] = useState(undefined);
   const [publishStream, setpublishStream] = useState(undefined);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
+  console.log({ Token, zgVar, publishStream });
   const { activeMessages, sockett: socket } = useAppSelector(
     (state) => state.Messages
+  );
+  const { activeChat, onlineUser, currentUser } = useAppSelector(
+    (state) => state.Users
   );
   const {
     outgoingCall,
@@ -28,7 +37,7 @@ const OngoingVideoCall = () => {
   const getToken = async () => {
     try {
       const { data: tokens } = await axios.get(
-        `${process.env.BaseUrl}/generate/token/${ReducerSesiion._id}`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/generate/token/${currentUser._id}`
       );
 
       setToken(tokens);
@@ -44,6 +53,7 @@ const OngoingVideoCall = () => {
         process.env.ZEGO_SERVER_SECRET
       );
       setzgVar(zg);
+      dispatch(zgVars(zg));
       zg.on(
         'roomStreamUpdate',
         async (roomID, updateType, streamList, extendedData) => {
@@ -72,17 +82,18 @@ const OngoingVideoCall = () => {
           ) {
             zg.destroyStream(localStream);
             zg.stopPublishingStream(streamList[0].streamID);
-            zg.logoutRoom(data.roomId);
+            zg.logoutRoom(data.roomId.toString());
             dispatch(EndVideoCall());
           }
         }
       );
+      dispatch(RoomIds(data.roomId.toString()));
       await zg.loginRoom(
         data.roomId.toString(),
         Token,
         {
-          userID: ReducerSesiion._id.toString(),
-          userName: ReducerSesiion.displayName,
+          userID: currentUser._id.toString(),
+          userName: currentUser.displayName,
         },
         { userUpdate: true }
       );
@@ -108,7 +119,10 @@ const OngoingVideoCall = () => {
       const streamID = 123 + Date.now().toString();
       setpublishStream(streamID);
       setlocalStream(localStreams);
-      zg.startPublishingStream(streamID, localStreams);
+      dispatch(Lstreams(localStreams));
+      dispatch(publishStreams(streamID));
+
+      zg.startPublishingStream(streamID.toString(), localStreams);
     });
   };
 
@@ -123,30 +137,38 @@ const OngoingVideoCall = () => {
   }, [Token]);
 
   const EndCalls = () => {
-    zgVar.destroyStream(localStream);
-    zgVar.stopPublishingStream(publishStream);
-    zgVar.logoutRoom(data.roomId.toString());
+    zgVar?.destroyStream(localStream);
+    zgVar?.stopPublishingStream(publishStream);
+    zgVar?.logoutRoom(data.roomId.toString());
     dispatch(EndVideoCall(''));
-    Socketinfo.emit('end_call', { to: data.id });
+    socket.emit('end_v_call', { to: data.id });
   };
   return (
-    <div className="w-full text-white bg-chat-bg h-screen flex gap-3 flex-col items-center justify-center">
-      <div className=" flex flex-col w-full items-center justify-center">
-        <div className="my-15">
-          <Image src={data.avatar} width={120} height={120} alt='"avatar' />
+    <div className="absolute w-[50%] h-[65%] flex flex-col justify-center items-center bg-black bg-black-bg top-[40px] bg-contain">
+      <div className=" flex flex-col w-full h-[90%] items-center justify-center">
+        {!localStream && !publishStream && (
+          <div className="my-15">
+            <Image src={data.avatar} width={120} height={120} alt='"avatar' />
+          </div>
+        )}
+        <div className="w-full h-[90%] ">
+          <div className="my-5 relative w-full h-full" id="remote-video">
+            <div className="absolute bottom-5 right-5" id="local-audio"></div>
+          </div>
         </div>
-        <div className="my-5 relative w-full h-full" id="remote-video">
-          <div className="absolute bottom-5 right-5" id="local-audio"></div>
-        </div>
-        <h1 className="text-[40px] text-black">{data.displayName}</h1>
-        <h1 className="text-[20px] text-black">
-          {data.callType !== 'audio' ? 'on going' : 'Calling'}
-        </h1>
+        {!localStream && !publishStream && (
+          <h1 className="text-[40px] text-white">{data.displayName}</h1>
+        )}
+        {!localStream && !publishStream && (
+          <h1 className="text-[20px] text-white">
+            {data.callType === 'on_going' ? 'on going V. Call' : 'Calling'}
+          </h1>
+        )}
       </div>
 
       <div
         onClick={EndCalls}
-        className="bg-[#e31a1a] cursor-pointer w-[50px] h-[50px] flex mt-[60px] items-center rounded-full "
+        className="bg-[#e31a1a] cursor-pointer w-[50px] h-[50px] flex mt-[30px] items-center rounded-full "
       >
         <MdOutlineCallEnd className="w-[45px] h-[45px] m-auto text-white" />
       </div>

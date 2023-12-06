@@ -74,6 +74,11 @@ export default function Home() {
     incomingvideoCall,
     ongoingVideoCall,
   } = useAppSelector((state) => state.Calls);
+  const { zgVar, localStream, publishStream, roomId } = useAppSelector(
+    (state) => state.Zego
+  );
+
+  console.log({ PagezgVar: zgVar, localStream, publishStream, roomId });
 
   const photoPickChange = async (e: ChangeEvent<HTMLInputElement>) => {
     console.log('we enter function');
@@ -236,18 +241,25 @@ export default function Home() {
   socket?.on('end_voice_call', () => {
     dispatch(EndVCall(null));
   });
+
   socket?.on('end_video_call', () => {
-    console.log('weeeeeeeeeeeeeeeeeeeee');
-    dispatch(EndVideoCall(null));
+    if (zgVar && localStream && publishStream && roomId) {
+      console.log('weeeeeeeeeeeeeeeeeeeee');
+      zgVar?.destroyStream(localStream);
+      zgVar?.stopPublishingStream(publishStream);
+      zgVar?.logoutRoom(roomId);
+      dispatch(EndVideoCall(null));
+    }
   });
   socket?.on('voice_call_rejected', () => {
     dispatch(EndVCall(null));
   });
   socket?.on('accept-call', () => {
-    dispatch(updateVoiceCall(''));
+    console.log('call accepted');
+    dispatch(updateVoiceCall({ ...outgoingCall, callType: 'on_going' }));
   });
   socket?.on('accept-Vcall', () => {
-    dispatch(updateVideoCall(''));
+    dispatch(updateVideoCall({ ...outgoingVideoCall, callType: 'on_going' }));
   });
   socket?.on('video_call_rejected', () => {
     dispatch(EndVideoCall(''));
@@ -258,13 +270,14 @@ export default function Home() {
       dispatch(
         OutGoingVCall({
           ...activeChat,
-          type: 'out-going',
-          callType: 'voice',
+          type: 'voice',
+          callType: 'out-going',
           roomId: Date.now(),
         })
       );
     }
   };
+  console.log({ ongoingVoiceCall });
 
   const HandleOutgoingVideoCall = () => {
     if (!outgoingCall || ongoingVoiceCall) {

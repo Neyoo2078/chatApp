@@ -35,6 +35,7 @@ const IncomingVoiceCall = () => {
 
   const acceptCall = () => {
     dispatch(OngoingVoiceCall({ ...incomingCall, callType: 'on_going' }));
+    console.log({ IDDDD: incomingCall.id });
     socket.emit('accept-incoming-call', { id: incomingCall.id });
     dispatch(IncomingVoiceCalls(undefined));
   };

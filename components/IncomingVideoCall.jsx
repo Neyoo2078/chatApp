@@ -1,14 +1,17 @@
+'use client';
 import Image from 'next/image';
-import { OngoingVideoCall } from '@/Redux/Slices/Calls';
+import React from 'react';
+import {
+  OngoingVideoCall,
+  IncomingVideoCall as IncomingVideoCalls,
+} from '@/Redux/Slices/Calls';
 import { useDispatch } from 'react-redux';
 import { EndVideoCall } from '@/Redux/Slices/Calls';
 import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
 
 const IncomingVideoCall = () => {
-  const dispatch = useDispatch();
-  const { activeMessages, sockett: socket } = useAppSelector(
-    (state) => state.Messages
-  );
+  const dispatch = useAppDispatch();
+
   const {
     outgoingCall,
     incomingCall,
@@ -16,11 +19,16 @@ const IncomingVideoCall = () => {
     outgoingVideoCall,
     incomingvideoCall,
   } = useAppSelector((state) => state.Calls);
+
+  const { activeMessages, sockett: socket } = useAppSelector(
+    (state) => state.Messages
+  );
   console.log({ incomingvideoCall });
+
   const acceptCall = () => {
-    dispatch(OngoingVideoCall({ ...incomingvideoCall, callType: 'in-coming' }));
+    dispatch(OngoingVideoCall({ ...incomingvideoCall, callType: 'on_going' }));
     socket.emit('accept-incoming-Vcall', { id: incomingvideoCall.id });
-    dispatch(IncomingVideoCall(undefined));
+    dispatch(IncomingVideoCalls(undefined));
   };
 
   const rejectCall = () => {

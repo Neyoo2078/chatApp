@@ -33,9 +33,10 @@ const CallSlice = createSlice({
     EndVCall(state, action) {
       state.incomingCall = null;
       state.outgoingCall = null;
+      state.ongoingVoiceCall = null;
     },
     updateVoiceCall(state, action) {
-      state.incomingCall = { ...state.incomingCall, callType: 'on_going' };
+      state.outgoingCall = action.payload;
     },
     OngoingVoiceCall(state, action) {
       state.ongoingVoiceCall = action.payload;
@@ -49,9 +50,10 @@ const CallSlice = createSlice({
     EndVideoCall(state, action) {
       state.incomingvideoCall = null;
       state.outgoingVideoCall = null;
+      state.ongoingVideoCall = null;
     },
     updateVideoCall(state, action) {
-      state.incomingCall = { ...state.incomingCall, callType: 'on_going' };
+      state.outgoingVideoCall = action.payload;
     },
     OngoingVideoCall(state, action) {
       state.ongoingVideoCall = action.payload;

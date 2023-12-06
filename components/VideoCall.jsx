@@ -6,13 +6,21 @@ import { useDispatch, useSelector } from 'react-redux';
 import { EndVCall, EndVideoCall } from '@/Redux/Slices/Calls';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '@/Redux/hooks';
+
+import {
+  zgVars,
+  localStreams as Lstreams,
+  publishStreams,
+  RoomIds,
+} from '@/Redux/Slices/Zego';
+
 const VideoCall = () => {
   const [CallAccepted, setCallAccepted] = useState(false);
   const [Token, setToken] = useState(undefined);
   const [zgVar, setzgVar] = useState(undefined);
   const [localStream, setlocalStream] = useState(undefined);
   const [publishStream, setpublishStream] = useState(undefined);
-  console.log({ zgVar, Token });
+  console.log({ zgVar, Token, localStream, publishStream });
   console.log(Token);
   const dispatch = useAppDispatch();
 
@@ -30,7 +38,7 @@ const VideoCall = () => {
   const getToken = async () => {
     try {
       const { data: tokens } = await axios.get(
-        `${process.env.BaseUrl}/generate/token/${currentUser._id}`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/generate/token/${currentUser._id}`
       );
 
       setToken(tokens);
@@ -41,14 +49,14 @@ const VideoCall = () => {
 
   const EndCalls = () => {
     if (data.callType === 'on_going' && zgVar && localStream && publishStream) {
-      zgVar.destroyStream(localStream);
-      zgVar.stopPublishingStream(publishStream);
-      zgVar.logoutRoom(data.roomId.toString());
+      zgVar?.destroyStream(localStream);
+      zgVar?.stopPublishingStream(publishStream);
+      zgVar?.logoutRoom(data.roomId.toString());
     }
 
     dispatch(EndVideoCall());
 
-    socket?.emit('end_v_call+', {
+    socket?.emit('end_v_call', {
       to: data._id,
       from: {
         id: currentUser._id,
@@ -60,6 +68,7 @@ const VideoCall = () => {
     });
   };
 
+  useEffect(() => {}, []);
   const StartCall = async () => {
     import('zego-express-engine-webrtc').then(async ({ ZegoExpressEngine }) => {
       const zg = new ZegoExpressEngine(
@@ -67,6 +76,7 @@ const VideoCall = () => {
         process.env.ZEGO_SERVER_SECRET
       );
       setzgVar(zg);
+      dispatch(zgVars(zg));
       zg.on(
         'roomStreamUpdate',
         async (roomID, updateType, streamList, extendedData) => {
@@ -80,6 +90,7 @@ const VideoCall = () => {
             if (rmVideo) {
               rmVideo.appendChild(vd);
             }
+
             zg.startPlayingStream(streamList[0].streamID, {
               audio: true,
               video: true,
@@ -99,6 +110,7 @@ const VideoCall = () => {
           }
         }
       );
+      dispatch(RoomIds(data.roomId.toString()));
       await zg.loginRoom(
         data.roomId.toString(),
         Token,
@@ -130,7 +142,10 @@ const VideoCall = () => {
       const streamID = 123 + Date.now().toString();
       setpublishStream(streamID);
       setlocalStream(localStreams);
-      zg.startPublishingStream(streamID, localStreams);
+      dispatch(publishStreams(streamID));
+      dispatch(Lstreams(localStreams));
+
+      zg.startPublishingStream(streamID.toString(), localStreams);
     });
   };
 
@@ -158,23 +173,29 @@ const VideoCall = () => {
   }, []);
 
   return (
-    <div className="w-full text-white bg-chat-bg h-screen flex gap-3 flex-col items-center justify-center">
+    <div className="absolute w-[50%] h-[65%] flex   flex-col justify-center items-center bg-black bg-black-bg top-[40px] bg-contain">
       <div className=" flex flex-col w-full items-center justify-center">
-        <div className="my-15">
-          <Image src={data.avatar} width={120} height={120} alt='"avatar' />
-        </div>
+        {!localStream && !publishStream && (
+          <div className="my-15">
+            <Image src={data.avatar} width={120} height={120} alt='"avatar' />
+          </div>
+        )}
         <div className="my-5 relative w-full h-full" id="remote-video">
           <div className="absolute bottom-5 right-5" id="local-audio"></div>
         </div>
-        <h1 className="text-[40px] text-black">{data.displayName}</h1>
-        <h1 className="text-[20px] text-black">
-          {data.callType === 'on_going' ? 'on going V. Call' : 'Calling'}
-        </h1>
+        {!localStream && !publishStream && (
+          <h1 className="text-[40px] text-white">{data.displayName}</h1>
+        )}
+        {!localStream && !publishStream && (
+          <h1 className="text-[20px] text-white">
+            {data.callType === 'on_going' ? 'on going V. Call' : 'Calling'}
+          </h1>
+        )}
       </div>
 
       <div
         onClick={EndCalls}
-        className="bg-[#e31a1a] cursor-pointer w-[50px] h-[50px] flex mt-[60px] items-center rounded-full "
+        className="bg-[#e31a1a] cursor-pointer w-[50px] h-[50px] flex mt-[30px] items-center rounded-full "
       >
         <MdOutlineCallEnd className="w-[45px] h-[45px] m-auto text-white" />
       </div>

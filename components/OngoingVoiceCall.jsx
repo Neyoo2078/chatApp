@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { MdOutlineCallEnd } from 'react-icons/md';
 import { EndVCall as EndCall } from '@/Redux/Slices/Calls';
+import axios from 'axios';
+
 import {
   IncomingVoiceCall as IncomingVoiceCalls,
   OngoingVoiceCall as OngoingVoiceCalls,
@@ -16,6 +18,7 @@ const OngoingVoiceCall = () => {
   const [localStream, setlocalStream] = useState(undefined);
   const [publishStream, setpublishStream] = useState(undefined);
 
+  console.log({ Token, zgVar });
   // useSelector
   const { activeChat, onlineUser, currentUser } = useAppSelector(
     (state) => state.Users
@@ -33,7 +36,7 @@ const OngoingVoiceCall = () => {
   const getToken = async () => {
     try {
       const { data: token } = await axios.get(
-        `/generate/token/${currentUser._id}`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/generate/token/${currentUser._id}`
       );
 
       setToken(token);
@@ -45,7 +48,7 @@ const OngoingVoiceCall = () => {
   const StartCall = async () => {
     import('zego-express-engine-webrtc').then(async ({ ZegoExpressEngine }) => {
       const zg = new ZegoExpressEngine(
-        process.env.ZEGO_APP_ID,
+        parseInt(process.env.ZEGOAPP_ID),
         process.env.ZEGO_SERVER_SECRET
       );
       setzgVar(zg);
@@ -107,14 +110,12 @@ const OngoingVoiceCall = () => {
       td.srcObject = localStreams;
       const streamID = 123 + Date.now();
       setpublishStream(streamID);
-      zg.startPublishingStream(streamID, localStreams);
+      zg.startPublishingStream(streamID.toString(), localStreams);
     });
   };
 
   useEffect(() => {
-    if (data.callType === 'on_going') {
-      getToken();
-    }
+    getToken();
   }, [data]);
   useEffect(() => {
     if (Token) {
@@ -123,31 +124,28 @@ const OngoingVoiceCall = () => {
   }, [Token]);
 
   const EndCalls = () => {
+    console.log('end');
     dispatch(EndCall());
-    Socketinfo.emit('end_call', { to: ongoingVoiceCall.id });
+    socket.emit('end_call', { to: data.id });
 
-    zgVar.destroyStream(localStream);
-    zgVar.stopPublishingStream(publishStream);
-    zgVar.logoutRoom(data.roomId);
+    zgVar?.destroyStream(localStream);
+    zgVar?.stopPublishingStream(publishStream);
+    zgVar?.logoutRoom(data.roomId);
   };
   return (
     <div className="w-full text-white bg-chat-bg h-screen flex gap-3 flex-col items-center justify-center">
       <div className=" flex flex-col w-full items-center justify-center">
-        {ongoingVoiceCall.callType === 'in-coming' && (
+        {data.callType === 'on_going' && (
           <div className="my-15">
-            <Image
-              src={ongoingVoiceCall.avatar}
-              width={120}
-              height={120}
-              alt='"avatar'
-            />
+            <Image src={data.avatar} width={120} height={120} alt='"avatar' />
           </div>
         )}
-        <h1 className="text-[40px] text-black">
-          {ongoingVoiceCall.displayName}
-        </h1>
+        <div className="my-5 relative" id="remote-video">
+          <div className="absolute bottom-5 right-5" id="local-audio"></div>
+        </div>
+        <h1 className="text-[40px] text-black">{data.displayName}</h1>
         <h1 className="text-[20px] text-black">
-          {ongoingVoiceCall.callType !== 'audio' ? 'on going' : 'Calling'}
+          {data.callType !== 'audio' ? 'on going' : 'Calling'}
         </h1>
       </div>
 

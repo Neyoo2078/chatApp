@@ -7,11 +7,11 @@ const nextConfig = {
     NEXTAUTH_SECRET: 'AE2JRi5N07X334BzPSOae7/yZNTvHn+JX6D0Zs4HLIU=',
     NEXTAUTH_URL_INTERNAL: 'http://localhost:3000',
     NEXT_PUBLIC_SITE_URL: 'http://localhost:5000',
-    WEB_SERVER: 'https://whatapp-server-mgyi.onrender.com',
+
     TWITTER_ID: '',
     TWITTER_SECRET: '',
     SERVER_URL: 'http://localhost:3001',
-    ZEGOAPP_ID: 1959285735,
+    ZEGOAPP_ID: '1959285735',
     ZEGO_SERVER_SECRET: 'fc3851fb17534ce7a33867f1f4b934a0',
   },
 };
