@@ -7,7 +7,7 @@ const nextConfig = {
     NEXTAUTH_SECRET: 'AE2JRi5N07X334BzPSOae7/yZNTvHn+JX6D0Zs4HLIU=',
     NEXTAUTH_URL_INTERNAL: 'http://localhost:3000',
     NEXT_PUBLIC_SITE_URL: 'http://localhost:5000',
-
+    WEB_SERVER: 'https://whatapp-server-mgyi.onrender.com',
     TWITTER_ID: '',
     TWITTER_SECRET: '',
     SERVER_URL: 'http://localhost:3001',
