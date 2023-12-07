@@ -38,7 +38,7 @@ const VideoCall = () => {
   const getToken = async () => {
     try {
       const { data: tokens } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/generate/token/${currentUser._id}`
+        `${process.env.WEB_SERVER}/generate/token/${currentUser._id}`
       );
 
       setToken(tokens);
